@@ -24,3 +24,5 @@ Thumbs.db
 # Logs / temporary files
 *.log
 *_err.txt
+# Agent output
+agent_audit_report.json

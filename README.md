@@ -118,6 +118,36 @@ python skills/audit-orchestrator/scripts/compose_report.py \
 
 ---
 
+## AI Agent Mode (LLM-driven audit)
+
+The `agent/` package adds a real agent on top of the skills. An LLM plans the audit, calls the
+skill scripts as tools, reads pages to confirm surprising findings, asks a general AI assistant
+what it believes about the brand, compares those answers with the site's own facts, and writes a
+plain-English summary with prioritised fixes. Everything stays bounded: URLs are pinned to the
+audited host, each audit stage runs at most twice, and the loop has a step limit.
+
+Only free model providers are wired in, all through their OpenAI-compatible endpoints:
+
+| Provider | Key variable | Default model |
+| --- | --- | --- |
+| `gemini` (default) | `GEMINI_API_KEY` | `gemini-2.5-flash` |
+| `groq` | `GROQ_API_KEY` | `llama-3.3-70b-versatile` |
+| `openrouter` | `OPENROUTER_API_KEY` | `meta-llama/llama-3.3-70b-instruct:free` |
+| `ollama` (local) | none | `llama3.1` |
+
+```bash
+export GEMINI_API_KEY=...            # free key from https://aistudio.google.com/apikey
+python -m agent example.com --max-pages 3 --output agent_audit_report.json
+python -m agent example.com --provider ollama --model qwen2.5   # fully local
+```
+
+The output is the standard report plus an `agent` section with `summary`, `top_fixes`,
+`ai_perception` (match / mismatch / unknown per question), the raw `probe_answers`, and a step
+`trace` of every thought and tool call. `AuditAgent(on_event=...)` streams the same events, which
+the dashboard can use for live progress.
+
+---
+
 ## Real-Website Smoke Testing
 
 The marketplace is intended to run against unseen live websites, not only the offline fixtures used by the unit tests. Before submission, run the entrypoint against 2–3 real public URLs and inspect the generated JSON reports. A ready-to-use PowerShell smoke-test script is provided at `examples/run_live_smoke_tests.ps1`.
